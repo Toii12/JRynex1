@@ -1,0 +1,25 @@
+{
+  "name": "personal-vault-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "lint": "echo lint skipped"
+  },
+  "dependencies": {
+    "vue": "^3.2.13",
+    "vue-router": "^5.1.0",
+    "element-plus": "^2.14.1",
+    "@element-plus/icons-vue": "^2.3.1",
+    "axios": "^1.17.0",
+    "core-js": "^3.8.3"
+  },
+  "devDependencies": {
+    "@vue/cli-plugin-babel": "~5.0.0",
+    "@vue/cli-plugin-router": "~5.0.0",
+    "@vue/cli-service": "~5.0.0",
+    "eslint": "^8.0.0",
+    "eslint-plugin-vue": "^9.0.0"
+  }
+}

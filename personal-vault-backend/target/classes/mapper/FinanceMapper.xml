@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.vault.mapper.FinanceMapper">
+
+    <!-- 财务记录查询（支持搜索+分类+类型筛选） -->
+    <select id="findAll" resultType="com.vault.entity.FinanceRecord">
+        SELECT r.id, r.user_id, r.category_id, r.type, r.amount, r.date, r.created_at,
+               c.name AS category_name
+        FROM finance_record r
+        LEFT JOIN finance_category c ON r.category_id = c.id
+        WHERE r.user_id = #{userId}
+        <if test="categoryId != null">
+            AND r.category_id = #{categoryId}
+        </if>
+        <if test="type != null and type != ''">
+            AND r.type = #{type}
+        </if>
+        ORDER BY r.date DESC, r.created_at DESC
+    </select>
+
+    <select id="findById" resultType="com.vault.entity.FinanceRecord">
+        SELECT id, user_id, category_id, type, amount, date, created_at
+        FROM finance_record WHERE id = #{id}
+    </select>
+
+    <insert id="addRecord" parameterType="com.vault.entity.FinanceRecord" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO finance_record (user_id, category_id, type, amount, date)
+        VALUES (#{userId}, #{categoryId}, #{type}, #{amount}, #{date})
+    </insert>
+
+    <update id="updateRecord" parameterType="com.vault.entity.FinanceRecord">
+        UPDATE finance_record
+        <set>
+            <if test="categoryId != null">category_id = #{categoryId},</if>
+            <if test="type != null">type = #{type},</if>
+            <if test="amount != null">amount = #{amount},</if>
+            <if test="date != null">date = #{date},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteRecord">
+        DELETE FROM finance_record WHERE id = #{id}
+    </delete>
+
+    <!-- 月度金额统计 -->
+    <select id="sumByTypeAndMonth" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(amount), 0)
+        FROM finance_record
+        WHERE user_id = #{userId}
+          AND type = #{type}
+          AND DATE_FORMAT(date, '%Y-%m') = #{yearMonth}
+    </select>
+
+    <!-- 财务分类 -->
+    <select id="findAllCategories" resultType="com.vault.entity.FinanceCategory">
+        SELECT id, name, type, is_default
+        FROM finance_category
+        WHERE type = #{type}
+        ORDER BY is_default DESC, id ASC
+    </select>
+
+    <insert id="addCategory" parameterType="com.vault.entity.FinanceCategory" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO finance_category (name, type, is_default) VALUES (#{name}, #{type}, 0)
+    </insert>
+
+    <delete id="deleteCategory">
+        DELETE FROM finance_category WHERE id = #{id} AND is_default = 0
+    </delete>
+
+</mapper>
