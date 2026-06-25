@@ -640,6 +640,69 @@ body {
   font-size: 12px; color: var(--text-muted);
   font-style: italic;
 }
+
+/* ========== CALENDAR ========== */
+.cal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 6px;
+}
+.cal-month-year {
+  font-size: 14px; font-weight: bold; color: var(--text);
+  letter-spacing: 1px;
+}
+.cal-nav {
+  width: 24px; height: 24px; padding: 0; font-size: 10px;
+  background: var(--btn-bg);
+  border: 1px solid;
+  border-color: var(--btn-border-light) var(--btn-border-dark) var(--btn-border-dark) var(--btn-border-light);
+  color: var(--text); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: box-shadow 0.25s ease;
+}
+.cal-nav:hover { box-shadow: var(--btn-hover-glow); }
+.cal-weekdays {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  text-align: center; font-size: 11px; color: var(--text-muted);
+  padding: 4px 0; border-bottom: 1px solid var(--btn-border-dark);
+  margin-bottom: 4px;
+}
+.cal-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.cal-day {
+  aspect-ratio: 1; min-height: 32px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-size: 12px; color: var(--text);
+  cursor: pointer; position: relative;
+  border: 1px solid transparent;
+  transition: border-color 0.15s;
+}
+.cal-day:hover { border-color: var(--btn-border-dark); background: var(--input-bg); }
+.cal-day.other-month { color: var(--text-muted); opacity: 0.4; }
+.cal-day.today { font-weight: bold; color: #8b6b4a; background: var(--input-bg); }
+.cal-day.today::after {
+  content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%);
+  width: 4px; height: 4px; border-radius: 50%; background: #a08060;
+}
+.cal-day.has-event::before {
+  content: ''; position: absolute; top: 3px; right: 3px;
+  width: 5px; height: 5px; border-radius: 50%; background: #b8a080;
+}
+.cal-info {
+  font-size: 12px; color: var(--text);
+  padding: 6px 0 2px;
+  border-top: 1px solid var(--btn-border-dark);
+  max-height: 100px; overflow-y: auto;
+}
+.cal-info::-webkit-scrollbar { width: 4px; }
+.cal-info::-webkit-scrollbar-thumb { background: var(--btn-border-dark); }
+.cal-info .event-name { font-weight: bold; }
+.cal-info .countdown { color: var(--text-muted); font-size: 11px; }
+.cal-event-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 2px 0;
+}
 </style>
 </head>
 <body>
@@ -735,6 +798,41 @@ body {
       <span style="font-size:10px;color:var(--text-muted)">weather.exe</span>
     </div>
   </div>
+
+  <!-- Calendar window -->
+  <div class="window" id="window-calendar" style="top:200px;left:calc(50% + 280px);width:340px;min-width:300px;min-height:320px;">
+    <div class="title-bar" data-window="window-calendar">
+      <div class="title-bar-left">
+        <div class="title-bar-icon">&#128197;</div>
+        <span class="title-bar-text">calendar.exe</span>
+      </div>
+      <div class="title-bar-controls">
+        <button class="title-btn" title="minimize" data-action="minimize">&#x2014;</button>
+        <button class="title-btn" title="maximize" data-action="maximize">&#9633;</button>
+        <button class="title-btn" title="close" data-action="minimize">&#10005;</button>
+      </div>
+    </div>
+    <div class="window-body" style="padding:12px 14px;gap:8px;">
+      <!-- Month header -->
+      <div class="cal-header">
+        <button class="cal-nav" onclick="changeMonth(-1)">&#9664;</button>
+        <span class="cal-month-year" id="calMonthYear"></span>
+        <button class="cal-nav" onclick="changeMonth(1)">&#9654;</button>
+      </div>
+      <!-- Day names -->
+      <div class="cal-weekdays">
+        <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+      </div>
+      <!-- Day grid -->
+      <div class="cal-grid" id="calGrid"></div>
+      <!-- Bottom info -->
+      <div class="cal-info" id="calInfo"></div>
+    </div>
+    <div class="status-bar">
+      <span id="calToday"></span>
+      <span style="font-size:10px;color:var(--text-muted)">calendar.exe</span>
+    </div>
+  </div>
 </div>
 
 <!-- Taskbar -->
@@ -746,6 +844,10 @@ body {
   <div class="taskbar-item visible active" id="taskbarWeather" data-window="window-weather" onclick="restoreWindow('window-weather')">
     <div class="taskbar-item-icon">&#9788;</div>
     <span>weather.exe</span>
+  </div>
+  <div class="taskbar-item visible active" id="taskbarCalendar" data-window="window-calendar" onclick="restoreWindow('window-calendar')">
+    <div class="taskbar-item-icon">&#128197;</div>
+    <span>calendar.exe</span>
   </div>
 </div>
 
@@ -1341,6 +1443,127 @@ function loadWeather() {
   iconEl.className = 'weather-icon';
   if (d.icon) iconEl.classList.add(d.icon);
 }
+
+// ========== CALENDAR ==========
+var calYear, calMonth;
+var calToday = new Date();
+var calEvents = {};
+
+function loadCalEvents() {
+  try { calEvents = JSON.parse(localStorage.getItem('cal_events') || '{}'); } catch(e) { calEvents = {}; }
+}
+function saveCalEvents() {
+  localStorage.setItem('cal_events', JSON.stringify(calEvents));
+}
+function getDateKey(y, m, d) { return y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0'); }
+function isToday(y, m, d) {
+  return y === calToday.getFullYear() && m === calToday.getMonth() && d === calToday.getDate();
+}
+
+function renderCalendar() {
+  loadCalEvents();
+  var months = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  document.getElementById('calMonthYear').textContent = calYear + '年 ' + months[calMonth];
+  document.getElementById('calToday').textContent = '今天: ' + calYear + '/' + String(calMonth+1).padStart(2,'0') + '/' + String(calToday.getDate()).padStart(2,'0');
+
+  var firstDay = new Date(calYear, calMonth, 1).getDay();
+  var daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  var daysInPrev = new Date(calYear, calMonth, 0).getDate();
+  var grid = document.getElementById('calGrid');
+  var html = '';
+
+  // Prev month tail
+  for (var i = firstDay - 1; i >= 0; i--) {
+    var d = daysInPrev - i;
+    html += '<div class="cal-day other-month">' + d + '</div>';
+  }
+
+  // Current month
+  for (var d = 1; d <= daysInMonth; d++) {
+    var cls = 'cal-day';
+    if (isToday(calYear, calMonth, d)) cls += ' today';
+    var key = getDateKey(calYear, calMonth, d);
+    if (calEvents[key]) cls += ' has-event';
+    html += '<div class="' + cls + '" onclick="clickDay(' + d + ')" data-day="' + d + '">' + d + '</div>';
+  }
+
+  // Next month leading
+  var remaining = 7 - ((firstDay + daysInMonth) % 7);
+  if (remaining === 7) remaining = 0;
+  for (var d = 1; d <= remaining; d++) {
+    html += '<div class="cal-day other-month">' + d + '</div>';
+  }
+
+  grid.innerHTML = html;
+  renderCalInfo();
+}
+
+function renderCalInfo() {
+  var info = document.getElementById('calInfo');
+  var now = new Date(calToday.getFullYear(), calToday.getMonth(), calToday.getDate());
+  var allEvents = [];
+
+  for (var key in calEvents) {
+    if (!calEvents.hasOwnProperty(key)) continue;
+    var parts = key.split('-');
+    var eventDate = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+    var diff = Math.floor((eventDate - now) / 86400000);
+    allEvents.push({ date: key, name: calEvents[key], diff: diff, absDiff: Math.abs(diff) });
+  }
+
+  if (allEvents.length === 0) {
+    info.innerHTML = '<span class="countdown">点击日期添加事件</span>';
+    return;
+  }
+
+  // Sort by date proximity (closest first)
+  allEvents.sort(function(a, b) { return a.absDiff - b.absDiff; });
+
+  var html = '';
+  for (var i = 0; i < allEvents.length; i++) {
+    var e = allEvents[i];
+    var label = e.diff > 0 ? '还有 ' + e.diff + ' 天' : (e.diff === 0 ? '就是今天' : '已过 ' + Math.abs(e.diff) + ' 天');
+    var css = e.diff < 0 ? ' style="opacity:0.5"' : '';
+    html += '<div class="cal-event-item"' + css + '>';
+    html += '<span class="event-name">' + escapeHtml(e.name) + '</span>';
+    html += '<span class="countdown">' + label + '</span>';
+    html += '</div>';
+  }
+
+  info.innerHTML = html;
+}
+
+function clickDay(day) {
+  var key = getDateKey(calYear, calMonth, day);
+  var existing = calEvents[key] || '';
+  var name = prompt(existing ? '修改事件 "' + existing + '" 名称（留空删除）：' : '为此日期命名事件：', existing);
+  if (name === null) return; // cancelled
+  if (name.trim() === '') {
+    delete calEvents[key];
+  } else {
+    calEvents[key] = name.trim();
+  }
+  saveCalEvents();
+  renderCalendar();
+}
+
+function changeMonth(delta) {
+  calMonth += delta;
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  renderCalendar();
+}
+
+// Init calendar on load
+(function initCal() {
+  calYear = calToday.getFullYear();
+  calMonth = calToday.getMonth();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() { renderCalendar(); });
+  } else {
+    renderCalendar();
+  }
+})();
 </script>
 </body>
 </html>
