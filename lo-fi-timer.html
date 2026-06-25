@@ -539,6 +539,107 @@ body {
 
 /* ========== AUDIO ========== */
 .hidden-audio { display: none; }
+
+/* ========== WEATHER DISPLAY ========== */
+.weather-icon {
+  width: 64px; height: 64px; margin: 0 auto 8px;
+  position: relative;
+}
+/* sun */
+.weather-icon.sun { background: radial-gradient(circle at 50% 50%, #d4b896 0%, #d4b896 30%, transparent 31%); }
+.weather-icon.sun::before {
+  content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+  width: 24px; height: 24px; border-radius: 50%;
+  background: #c8a870;
+  box-shadow: 0 0 10px 3px rgba(200,168,112,0.4);
+}
+/* cloud */
+.weather-icon.cloud { background: linear-gradient(0deg, rgba(180,160,130,0.5) 60%, transparent 60%); }
+.weather-icon.cloud::before {
+  content: ''; position: absolute; top: 22px; left: 50%; transform: translateX(-50%);
+  width: 40px; height: 22px; border-radius: 20px 20px 0 0;
+  background: linear-gradient(0deg, #c4b89a 0%, #d4c5b2 100%);
+}
+.weather-icon.cloud::after {
+  content: ''; position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+  width: 28px; height: 16px; border-radius: 50%;
+  background: #d4c5b2;
+}
+/* cloud-sun */
+.weather-icon.cloud-sun {
+  background:
+    radial-gradient(circle at 28px 20px, #c8a870 0%, #c8a870 8px, transparent 9px),
+    linear-gradient(0deg, rgba(180,160,130,0.5) 60%, transparent 60%);
+}
+.weather-icon.cloud-sun::before {
+  content: ''; position: absolute; top: 28px; left: 50%; transform: translateX(-50%);
+  width: 36px; height: 18px; border-radius: 18px 18px 0 0;
+  background: linear-gradient(0deg, #bfb08e 0%, #d4c5b2 100%);
+}
+.weather-icon.cloud-sun::after {
+  content: ''; position: absolute; top: 22px; left: 50%; transform: translateX(-50%);
+  width: 24px; height: 14px; border-radius: 50%;
+  background: #d4c5b2;
+}
+/* rain */
+.weather-icon.rain,
+.weather-icon.rain-light,
+.weather-icon.rain-heavy { background: linear-gradient(0deg, rgba(180,160,130,0.5) 65%, transparent 65%); }
+.weather-icon.rain::before {
+  content: ''; position: absolute; top: 26px; left: 50%; transform: translateX(-50%);
+  width: 36px; height: 18px; border-radius: 18px 18px 0 0;
+  background: linear-gradient(0deg, #b8a888 0%, #c8b898 100%);
+}
+.weather-icon.rain::after {
+  content: ''; position: absolute; top: 32px; left: 50%; transform: translateX(-50%);
+  width: 24px; height: 14px; border-radius: 50%;
+  background: #c8b898;
+}
+/* thunder */
+.weather-icon.thunder {
+  background: linear-gradient(0deg, rgba(160,140,120,0.6) 70%, transparent 70%);
+}
+.weather-icon.thunder::before {
+  content: ''; position: absolute; top: 28px; left: 50%; transform: translateX(-50%);
+  width: 38px; height: 20px; border-radius: 19px 19px 0 0;
+  background: linear-gradient(0deg, #a09078 0%, #b8a888 100%);
+}
+.weather-icon.thunder::after {
+  content: ''; position: absolute; top: 22px; left: 50%; transform: translateX(-50%);
+  width: 26px; height: 14px; border-radius: 50%;
+  background: #b8a888;
+}
+/* fog */
+.weather-icon.fog { background: transparent; }
+.weather-icon.fog::before {
+  content: ''; position: absolute; top: 22px; left: 50%; transform: translateX(-50%);
+  width: 44px; height: 6px; border-radius: 3px;
+  background: rgba(180,160,140,0.5);
+  box-shadow: 0 8px 0 rgba(180,160,140,0.4), 0 16px 0 rgba(180,160,140,0.3);
+}
+/* snow */
+.weather-icon.snow { background: transparent; }
+.weather-icon.snow::before {
+  content: ''; position: absolute; top: 22px; left: 50%; transform: translateX(-50%);
+  width: 16px; height: 16px; border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #e0d8cc 0%, #c8b898 100%);
+  box-shadow: -8px 10px 0 #d0c4a8, 8px 6px 0 #c8b898;
+}
+.weather-temp {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 42px; color: var(--digit);
+  letter-spacing: 2px;
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.08);
+  margin-bottom: 2px;
+}
+.weather-city {
+  font-size: 13px; color: var(--text);
+  margin-bottom: 0;
+}
+.weather-desc {
+  font-size: 12px; color: var(--text-muted);
+  font-style: italic;
+}
 </style>
 </head>
 <body>
@@ -551,17 +652,17 @@ body {
 
 <!-- Desktop area -->
 <div class="desktop">
-  <div class="window">
+  <div class="window" id="window-focus">
     <!-- Title bar -->
-    <div class="title-bar">
+    <div class="title-bar" data-window="window-focus">
       <div class="title-bar-left">
         <div class="title-bar-icon">&#9673;</div>
         <span class="title-bar-text">focus.exe</span>
       </div>
       <div class="title-bar-controls">
-        <button class="title-btn" title="minimize" onclick="minimizeWindow()">&#x2014;</button>
-        <button class="title-btn" title="maximize" onclick="toggleMaximize()">&#9633;</button>
-        <button class="title-btn" title="close" onclick="minimizeWindow()">&#10005;</button>
+        <button class="title-btn" title="minimize" data-action="minimize">&#x2014;</button>
+        <button class="title-btn" title="maximize" data-action="maximize">&#9633;</button>
+        <button class="title-btn" title="close" data-action="minimize">&#10005;</button>
       </div>
     </div>
 
@@ -609,13 +710,42 @@ body {
       <button class="drawer-trigger" onclick="toggleDrawer()">今日记录</button>
     </div>
   </div>
+
+  <!-- Weather window -->
+  <div class="window" id="window-weather" style="top:100px;left:calc(50% - 160px);width:320px;min-width:280px;min-height:200px;">
+    <div class="title-bar" data-window="window-weather">
+      <div class="title-bar-left">
+        <div class="title-bar-icon">&#9788;</div>
+        <span class="title-bar-text">weather.exe</span>
+      </div>
+      <div class="title-bar-controls">
+        <button class="title-btn" title="minimize" data-action="minimize">&#x2014;</button>
+        <button class="title-btn" title="maximize" data-action="maximize">&#9633;</button>
+        <button class="title-btn" title="close" data-action="minimize">&#10005;</button>
+      </div>
+    </div>
+    <div class="window-body" style="text-align:center;padding:20px;">
+      <div class="weather-icon" id="weatherIcon"></div>
+      <div class="weather-temp" id="weatherTemp">--°</div>
+      <div class="weather-city" id="weatherCity">加载中...</div>
+      <div class="weather-desc" id="weatherDesc"></div>
+    </div>
+    <div class="status-bar">
+      <span id="weatherUpdated">--</span>
+      <span style="font-size:10px;color:var(--text-muted)">weather.exe</span>
+    </div>
+  </div>
 </div>
 
 <!-- Taskbar -->
 <div class="taskbar">
-  <div class="taskbar-item" id="taskbarFocus" onclick="restoreWindow()">
+  <div class="taskbar-item" id="taskbarFocus" data-window="window-focus" onclick="restoreWindow('window-focus')">
     <div class="taskbar-item-icon">&#9673;</div>
     <span>focus.exe</span>
+  </div>
+  <div class="taskbar-item visible active" id="taskbarWeather" data-window="window-weather" onclick="restoreWindow('window-weather')">
+    <div class="taskbar-item-icon">&#9788;</div>
+    <span>weather.exe</span>
   </div>
 </div>
 
@@ -633,6 +763,10 @@ body {
   </div>
 </div>
 
+<script src="weather_data.js"></script>
+<script>
+var WEATHER_DATA = WEATHER_DATA || {"city":"--","temp":null,"icon":"cloud-sun","desc":"--","updated":""};
+</script>
 <script>
 // ========== STATE ==========
 const state = {
@@ -1051,82 +1185,108 @@ function renderDrawerRecords() {
   body.innerHTML = html;
 }
 
-// ========== MINIMIZE / RESTORE ==========
-function minimizeWindow() {
-  var win = document.querySelector('.window');
-  var tbItem = document.getElementById('taskbarFocus');
+// ========== WINDOW MANAGER (multi-window) ==========
+function getWindow(id) { return document.getElementById(id); }
+
+function getTaskbarItem(id) {
+  return document.querySelector('.taskbar-item[data-window="' + id + '"]');
+}
+
+function minimizeWindow(id) {
+  var win = getWindow(id);
+  var tb = getTaskbarItem(id);
+  if (!win || !tb) return;
   win.classList.add('minimized');
-  tbItem.classList.add('visible');
-  tbItem.classList.add('active');
+  tb.classList.add('visible');
+  tb.classList.add('active');
 }
 
-function restoreWindow() {
-  var win = document.querySelector('.window');
-  var tbItem = document.getElementById('taskbarFocus');
+function restoreWindow(id) {
+  var win = getWindow(id);
+  var tb = getTaskbarItem(id);
+  if (!win || !tb) return;
   win.classList.remove('minimized');
-  tbItem.classList.remove('visible');
-  tbItem.classList.remove('active');
+  tb.classList.remove('visible');
+  tb.classList.remove('active');
 }
 
-// ========== DRAG ==========
-var dragState = { dragging: false, startX: 0, startY: 0, startLeft: 0, startTop: 0 };
-var winEl = null;
-var titleBarEl = null;
+// ========== DRAG (per-window) ==========
+var dragState = { dragging: false, win: null, startX: 0, startY: 0, startLeft: 0, startTop: 0 };
 
 function initDrag() {
-  winEl = document.querySelector('.window');
-  titleBarEl = winEl.querySelector('.title-bar');
-
-  titleBarEl.addEventListener('mousedown', function(e) {
-    if (e.target.tagName === 'BUTTON') return; // don't drag when clicking buttons
-    if (winEl.classList.contains('maximized')) return;
-    dragState.dragging = true;
-    dragState.startX = e.clientX;
-    dragState.startY = e.clientY;
-    dragState.startLeft = winEl.offsetLeft;
-    dragState.startTop = winEl.offsetTop;
-    document.body.style.cursor = 'move';
-    document.body.style.userSelect = 'none';
-    e.preventDefault();
-  });
+  var titleBars = document.querySelectorAll('.title-bar[data-window]');
+  for (var i = 0; i < titleBars.length; i++) {
+    titleBars[i].addEventListener('mousedown', function(e) {
+      if (e.target.tagName === 'BUTTON') return;
+      var winId = this.getAttribute('data-window');
+      var win = getWindow(winId);
+      if (!win || win.classList.contains('maximized')) return;
+      dragState.dragging = true;
+      dragState.win = win;
+      dragState.startX = e.clientX;
+      dragState.startY = e.clientY;
+      dragState.startLeft = win.offsetLeft;
+      dragState.startTop = win.offsetTop;
+      document.body.style.cursor = 'move';
+      document.body.style.userSelect = 'none';
+      e.preventDefault();
+    });
+  }
 
   document.addEventListener('mousemove', function(e) {
-    if (!dragState.dragging) return;
+    if (!dragState.dragging || !dragState.win) return;
     var dx = e.clientX - dragState.startX;
     var dy = e.clientY - dragState.startY;
-    winEl.style.left = Math.max(0, dragState.startLeft + dx) + 'px';
-    winEl.style.top = Math.max(0, dragState.startTop + dy) + 'px';
+    dragState.win.style.left = Math.max(0, dragState.startLeft + dx) + 'px';
+    dragState.win.style.top = Math.max(0, dragState.startTop + dy) + 'px';
   });
 
   document.addEventListener('mouseup', function() {
     if (!dragState.dragging) return;
     dragState.dragging = false;
+    dragState.win = null;
     document.body.style.cursor = '';
     document.body.style.userSelect = '';
   });
 }
 
-// ========== MAXIMIZE ==========
-var maxState = { left: '', top: '', width: '', height: '' };
+// ========== MAXIMIZE (per-window state) ==========
+var maxStates = {};
 
-function toggleMaximize() {
-  var win = document.querySelector('.window');
-  if (win.classList.contains('minimized')) return;
+function toggleMaximize(id) {
+  var win = getWindow(id);
+  if (!win || win.classList.contains('minimized')) return;
+
+  if (!maxStates[id]) maxStates[id] = { left: '', top: '', width: '', height: '' };
 
   if (win.classList.contains('maximized')) {
-    // Restore
     win.classList.remove('maximized');
-    win.style.left = maxState.left;
-    win.style.top = maxState.top;
-    win.style.width = maxState.width;
-    win.style.height = maxState.height;
+    win.style.left = maxStates[id].left;
+    win.style.top = maxStates[id].top;
+    win.style.width = maxStates[id].width;
+    win.style.height = maxStates[id].height;
   } else {
-    // Save current state and maximize
-    maxState.left = win.style.left || (win.offsetLeft + 'px');
-    maxState.top = win.style.top || (win.offsetTop + 'px');
-    maxState.width = win.style.width || (win.offsetWidth + 'px');
-    maxState.height = win.style.height || (win.offsetHeight + 'px');
+    maxStates[id].left = win.style.left || (win.offsetLeft + 'px');
+    maxStates[id].top = win.style.top || (win.offsetTop + 'px');
+    maxStates[id].width = win.style.width || (win.offsetWidth + 'px');
+    maxStates[id].height = win.style.height || (win.offsetHeight + 'px');
     win.classList.add('maximized');
+  }
+}
+
+// ========== TITLE BAR BUTTON HANDLER ==========
+function initTitleBarButtons() {
+  var buttons = document.querySelectorAll('.title-btn[data-action]');
+  for (var i = 0; i < buttons.length; i++) {
+    buttons[i].addEventListener('click', function(e) {
+      var action = this.getAttribute('data-action');
+      // walk up to find the .title-bar to get data-window
+      var bar = this.parentElement.parentElement;
+      var winId = bar.getAttribute('data-window');
+      if (!winId) return;
+      if (action === 'minimize') minimizeWindow(winId);
+      else if (action === 'maximize') toggleMaximize(winId);
+    });
   }
 }
 
@@ -1138,8 +1298,12 @@ document.addEventListener('DOMContentLoaded', function() {
   state.totalSeconds = state.remainingSeconds;
   updateDisplay();
 
-  // Init drag support
+  // Init window system
   initDrag();
+  initTitleBarButtons();
+
+  // Load weather data
+  loadWeather();
 
   // Keyboard shortcut: space to start/pause
   document.addEventListener('keydown', function(e) {
@@ -1158,6 +1322,25 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 });
+
+// ========== WEATHER LOADER ==========
+function loadWeather() {
+  if (!window.WEATHER_DATA || !WEATHER_DATA.temp) {
+    document.getElementById('weatherCity').textContent = '未获取天气数据';
+    document.getElementById('weatherTemp').textContent = '--°';
+    return;
+  }
+  var d = WEATHER_DATA;
+  document.getElementById('weatherTemp').textContent = d.temp + '°';
+  document.getElementById('weatherCity').textContent = d.city;
+  document.getElementById('weatherDesc').textContent = d.desc;
+  document.getElementById('weatherUpdated').textContent = '更新: ' + (d.updated || '--');
+
+  // Set weather icon class (remove all, add the right one)
+  var iconEl = document.getElementById('weatherIcon');
+  iconEl.className = 'weather-icon';
+  if (d.icon) iconEl.classList.add(d.icon);
+}
 </script>
 </body>
 </html>
